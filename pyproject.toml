@@ -1,7 +1,7 @@
 [project]
 name = "weather-etl"
 version = "0.1.0"
-description = "Add your description here"
+description = "Serverless Weather ETL pipeline using AWS CDK and dlt to ingest real-time weather data for Australian cities into AWS Athena."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

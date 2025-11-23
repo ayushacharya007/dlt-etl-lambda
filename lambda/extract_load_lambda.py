@@ -6,14 +6,10 @@ from typing import List, Dict, Optional, Any
 
 import dlt
 from dlt.sources.helpers import requests
-from dotenv import load_dotenv
 
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-# Load environment variables
-load_dotenv(dotenv_path="../.env")
 
 # Constants
 CITIES = [
@@ -27,18 +23,20 @@ CITIES = [
     {"city": "Darwin", "lat": -12.4634, "lon": 130.8456},
 ]
 
+API_KEY = os.getenv("WEATHER_API_KEY")
+if not API_KEY:
+    raise ValueError("WEATHER_API_KEY not found in environment variables")
+
 def format_time(ts: int) -> str:
     """Format timestamp to HH:MM:SS string."""
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
 
-def get_weather_data(city_info: Dict[str, Any], api_key: str) -> Optional[Dict[str, Any]]:
+def get_weather_data(city_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
     Fetch weather data for a specific city from OpenWeatherMap API.
     
     Args:
         city_info: Dictionary containing city name, lat, and lon.
-        api_key: OpenWeatherMap API key.
-        session: Optional requests session for connection pooling.
         
     Returns:
         Dictionary with processed weather data or None if fetch fails.
@@ -47,7 +45,7 @@ def get_weather_data(city_info: Dict[str, Any], api_key: str) -> Optional[Dict[s
     lat = city_info["lat"]
     lon = city_info["lon"]
     
-    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
     
     try:
         response = requests.get(url)
@@ -81,15 +79,10 @@ def weather_source(cities_list: List[Dict]):
     DLT resource that yields weather data for a list of cities.
     Uses parallel execution for faster data fetching.
     """
-    api_key = os.getenv("WEATHER_API_KEY")
-    if not api_key:
-        logger.error("WEATHER_API_KEY not found in environment variables")
-        return
-
     results = []
     
     for city_info in cities_list:
-        data = get_weather_data(city_info, api_key)
+        data = get_weather_data(city_info)
         if data:
             results.append(data)
             
