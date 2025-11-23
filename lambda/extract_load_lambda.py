@@ -73,7 +73,7 @@ def get_weather_data(city_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         logger.exception(f"Unexpected error processing {city}: {e}")
         return None
 
-@dlt.resource(table_name="weather_data", write_disposition="merge", primary_key=["city", "date"], table_format="iceberg")
+@dlt.resource(table_name="dlt_weather_data", write_disposition="merge", primary_key=["city", "date"], table_format="iceberg")
 def weather_source(cities_list: List[Dict]):
     """
     DLT resource that yields weather data for a list of cities.
@@ -105,7 +105,7 @@ def handler(event, context):
         etl_pipeline = dlt.pipeline(
             pipeline_name="weather_etl",
             destination="athena",
-            dataset_name="etl_weather_dataset",
+            dataset_name="dlt_weather_dataset",
         )
 
         load_info = etl_pipeline.run(weather_data_source())
