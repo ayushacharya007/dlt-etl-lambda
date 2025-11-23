@@ -56,7 +56,7 @@ cdk.out/
 # DLT / Data
 *.duckdb
 *.db
-.dlt/secrets.toml
+secrets.toml
 
 # IDEs and Editors
 .idea/
