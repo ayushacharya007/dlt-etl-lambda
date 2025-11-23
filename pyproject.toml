@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aws-cdk-lib>=2.227.0",
     "constructs>=10.4.3",
-    "dlt[athena,duckdb,workspace]>=1.18.2",
+    "dlt[athena,cli,duckdb,workspace]>=1.18.2",
     "notebook>=7.5.0",
     "pandas>=2.3.3",
     "python-dotenv>=1.2.1",
