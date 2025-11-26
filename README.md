@@ -2,7 +2,6 @@
 
 ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![dlt](https://img.shields.io/badge/dlt-Data_Load_Tool-FF6F00?style=for-the-badge)
 
 A robust, serverless ETL (Extract, Transform, Load) pipeline designed to ingest real-time weather data for major Australian cities. Built with **AWS CDK**, **AWS Lambda**, and **dlt** (Data Load Tool), this project demonstrates a modern, scalable approach to data warehousing using **AWS Athena** and **Apache Iceberg**.
@@ -36,7 +35,7 @@ graph TD
 
 ## 🚀 Key Features
 
-- **Serverless Compute**: Runs entirely on AWS Lambda, packaged as a Docker container for consistent execution environments.
+- **Serverless Compute**: Runs entirely on AWS Lambda, utilizing AWS Lambda Layers for efficient dependency management.
 - **Infrastructure as Code**: Fully defined and deployed using AWS CDK (Cloud Development Kit) in Python.
 - **Modern Data Loading**: Utilizes `dlt` for robust data extraction, normalization, and schema evolution.
 - **Open Table Format**: Stores data in **Apache Iceberg** format via AWS Athena for high-performance analytics.
@@ -44,7 +43,7 @@ graph TD
 ## 💻 Tech Stack
 
 - **Infrastructure**: AWS CDK (Python)
-- **Compute**: AWS Lambda (Dockerized)
+- **Compute**: AWS Lambda (Python Runtime)
 - **ETL Framework**: dlt (Data Load Tool)
 - **Storage**: Amazon S3 (Iceberg format)
 - **Query Engine**: AWS Athena
@@ -55,10 +54,10 @@ graph TD
 
 ```bash
 .
-├── lambda/                 # Lambda function code and Dockerfile
-│   ├── extract_load_lambda.py  # Main ETL script
-│   ├── Dockerfile              # Container definition
-│   └── requirements.txt        # Python dependencies
+├── lambda/                 # Lambda function code
+│   └── extract_load_lambda.py  # Main ETL script
+├── layers/                 # Lambda Layers
+│   └── python/             # Python dependencies
 ├── stacks/                 # AWS CDK Stacks
 │   └── dlt_stacks.py           # Infrastructure definition
 ├── app.py                  # CDK App entry point
@@ -66,7 +65,8 @@ graph TD
 ├── .gitignore              # Git ignore file
 ├── .python-version         # Python version file
 ├── pyproject.toml          # Project configuration
-└── uv.lock                 # Dependency lock file
+├── requirements.txt        # Project dependencies
+├── uv.lock                 # Dependency lock file
 └── README.md               # Project documentation
 ```
 
@@ -75,7 +75,6 @@ graph TD
 Before deploying, ensure you have the following:
 
 - **AWS Account** with CLI configured.
-- **Docker** installed and running.
 - **Node.js** (for AWS CDK).
 - **Python 3.12+**.
 - **OpenWeatherMap API Key**.
