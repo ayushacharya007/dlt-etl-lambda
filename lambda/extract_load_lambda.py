@@ -52,7 +52,6 @@ def get_weather_data(city_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             
         response.raise_for_status()
         data = response.json()
-        
         return {
             "country": data.get('sys', {}).get('country'),
             "city": city,
@@ -77,20 +76,15 @@ def get_weather_data(city_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 def weather_source(cities_list: List[Dict]):
     """
     DLT resource that yields weather data for a list of cities.
-    Uses parallel execution for faster data fetching.
     """
     results = []
-    
     for city_info in cities_list:
         data = get_weather_data(city_info)
         if data:
             results.append(data)
             
     if results:
-        logger.info(f"Successfully retrieved data for {len(results)} cities")
         yield results
-    else:
-        logger.warning("No data retrieved from API calls")
 
 @dlt.source
 def weather_data_source():
@@ -99,8 +93,6 @@ def weather_data_source():
 
 def handler(event, context):
     """Lambda handler function."""
-    logger.info("Starting Weather ETL job")
-    
     try:
         etl_pipeline = dlt.pipeline(
             pipeline_name="weather_etl",
@@ -109,7 +101,6 @@ def handler(event, context):
         )
 
         load_info = etl_pipeline.run(weather_data_source())
-        logger.info(f"Load info: {load_info}")
         
         return {
             "statusCode": 200, 

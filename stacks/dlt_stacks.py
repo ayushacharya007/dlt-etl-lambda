@@ -25,43 +25,92 @@ class WeatherELTStack(Stack):
 
         data_bucket = s3.Bucket.from_bucket_name(self, "DataBucket", data_bucket_name)
         query_results_bucket = s3.Bucket.from_bucket_name(self, "QueryResultsBucket", query_results_bucket_name)
+        
+        custom_dlt_layer = _lambda.LayerVersion(
+            self, "CustomDltAthenaLayer",
+            layer_version_name  ="custom-dlt-athena-layer-v1",
+            code=_lambda.Code.from_asset("layers/"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
+            compatible_architectures=[_lambda.Architecture.ARM_64],
+            description="Custom DLT Layer for Athena",
+            removal_policy=RemovalPolicy.DESTROY,
+        )
 
         # Define the Lambda function
-        etl_function = _lambda.DockerImageFunction(
+        etl_function = _lambda.Function(
             self, "EtlFunction",
-            code=_lambda.DockerImageCode.from_image_asset("lambda"),
+            function_name="dlt_weather_etl",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="extract_load_lambda.handler",
+            code=_lambda.Code.from_asset("lambda/"),
+            description="Function to extract and load weather data",
             timeout=Duration.minutes(5),
             memory_size=512,
+            architecture=_lambda.Architecture.ARM_64,
+            layers=[custom_dlt_layer],
             environment={
-                "WEATHER_API_KEY": os.environ["WEATHER_API_KEY"],
-                "DESTINATION__FILESYSTEM__BUCKET_URL": f"s3://{data_bucket_name}",
-                "DESTINATION__ATHENA__QUERY_RESULT_BUCKET": f"s3://{query_results_bucket_name}",
-                "DESTINATION__ATHENA__FORCE_ICEBERG": "true",
+                "WEATHER_API_KEY": os.environ["WEATHER_API_KEY"]
             }
         )
 
-        # Grant permissions
+        # Grant S3 permissions
         data_bucket.grant_read_write(etl_function)
         query_results_bucket.grant_read_write(etl_function)
 
-        # Grant permissions
+        # Grant Athena permissions
         etl_function.add_to_role_policy(iam.PolicyStatement(
             actions=[
                 "athena:StartQueryExecution",
                 "athena:GetQueryExecution",
                 "athena:GetQueryResults",
                 "athena:StopQueryExecution",
-                "glue:CreateDatabase",
-                "glue:CreateTable",
-                "glue:UpdateTable",
-                "glue:GetTable",
+                "athena:GetWorkGroup",
+                "athena:GetDataCatalog",
+                "athena:ListQueryExecutions",
             ],
-            resources=["*"]
+            resources=[
+                f"arn:aws:athena:{self.region}:{self.account}:workgroup/*",
+                f"arn:aws:athena:{self.region}:{self.account}:datacatalog/*",
+            ],
+        ))
+
+        # Grant Glue permissions for database and table operations
+        etl_function.add_to_role_policy(iam.PolicyStatement(
+            actions=[
+                "glue:CreateDatabase",
+                "glue:GetDatabase",
+                "glue:GetDatabases",
+                "glue:UpdateDatabase",
+                "glue:CreateTable",
+                "glue:GetTable",
+                "glue:GetTables",
+                "glue:UpdateTable",
+                # "glue:GetPartition",
+                # "glue:GetPartitions",
+                # "glue:CreatePartition",
+                # "glue:BatchCreatePartition",
+                # "glue:UpdatePartition",
+                # "glue:BatchUpdatePartition",
+            ],
+            resources=[
+                f"arn:aws:glue:{self.region}:{self.account}:catalog",
+                f"arn:aws:glue:{self.region}:{self.account}:database/*",
+                f"arn:aws:glue:{self.region}:{self.account}:table/*/*",
+            ],
+        ))
+
+        # Grant Lake Formation permissions (if Lake Formation is enabled)
+        etl_function.add_to_role_policy(iam.PolicyStatement(
+            actions=[
+                "lakeformation:GetResourceLFTags",
+                "lakeformation:GetDataAccess",
+            ],
+            resources=["*"],
         ))
         
         # Define the EventBridge rule to run the Lambda function every hour
         rule = events.Rule(
             self, "Rule",
             schedule=events.Schedule.cron(minute="0", hour="*"), 
-            targets=[events_targets.LambdaFunction(etl_function)]
+            targets=[events_targets.LambdaFunction(etl_function)] #type: ignore
         )

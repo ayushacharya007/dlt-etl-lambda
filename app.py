@@ -3,7 +3,7 @@ import os
 
 import aws_cdk as cdk
 
-from sample.sample_stack import WeatherELTStack
+from stacks.dlt_stacks import WeatherELTStack
 
 
 app = cdk.App()
